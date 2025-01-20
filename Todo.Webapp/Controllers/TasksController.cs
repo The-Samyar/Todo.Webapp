@@ -6,25 +6,20 @@ using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
-using Todo.Webapp.Data;
-using Todo.Webapp.Models;
+using DataLayer.Context;
+using DataLayer.Models;
 
 namespace Todo.Webapp.Controllers
 {
     public class TasksController : Controller
     {
-        private TodoWebappContext db = new TodoWebappContext();
+        private TodoDBContext db = new TodoDBContext();
 
         // GET: Tasks
-        public ActionResult Index(int id=1)
+        public ActionResult Index()
         {
-            var rowCount = 3;
-            var skip = (id - 1) * rowCount;
-            var tasks = db.Tasks.OrderBy(x=>x.TaskId).Skip(skip).Take(rowCount).ToList();
-            ViewBag.CurrentPage = id;
-            ViewBag.TotalPages = Math.Ceiling((double)tasks.Count / rowCount);
-
-            return View(tasks);
+            var tasks = db.tasks.Include(t => t.User).ToList();
+            return View();
         }
 
         // GET: Tasks/Details/5
@@ -34,32 +29,37 @@ namespace Todo.Webapp.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Tasks tasks = db.Tasks.Find(id);
-            if (tasks == null)
+            Task task = db.tasks.Find(id);
+            if (task == null)
             {
                 return HttpNotFound();
             }
-            return View(tasks);
+            return View(task);
         }
 
         // GET: Tasks/Create
         public ActionResult Create()
         {
+            ViewBag.UserId = new SelectList(db.users, "UserId", "Name");
             return View();
         }
 
         // POST: Tasks/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
+        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        public ActionResult Create([Bind(Include = "TaskId,Title,Complete")] Tasks tasks)
+        [ValidateAntiForgeryToken]
+        public ActionResult Create([Bind(Include = "TaskId,UserId,Title,Complete")] Task task)
         {
             if (ModelState.IsValid)
             {
-                db.Tasks.Add(tasks);
+                db.tasks.Add(task);
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
 
-            return View(tasks);
+            ViewBag.UserId = new SelectList(db.users, "UserId", "Name", task.UserId);
+            return View(task);
         }
 
         // GET: Tasks/Edit/5
@@ -69,12 +69,13 @@ namespace Todo.Webapp.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Tasks tasks = db.Tasks.Find(id);
-            if (tasks == null)
+            Task task = db.tasks.Find(id);
+            if (task == null)
             {
                 return HttpNotFound();
             }
-            return View(tasks);
+            ViewBag.UserId = new SelectList(db.users, "UserId", "Name", task.UserId);
+            return View(task);
         }
 
         // POST: Tasks/Edit/5
@@ -82,15 +83,16 @@ namespace Todo.Webapp.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "TaskId,Title,Complete")] Tasks tasks)
+        public ActionResult Edit([Bind(Include = "TaskId,UserId,Title,Complete")] Task task)
         {
             if (ModelState.IsValid)
             {
-                db.Entry(tasks).State = EntityState.Modified;
+                db.Entry(task).State = EntityState.Modified;
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
-            return View(tasks);
+            ViewBag.UserId = new SelectList(db.users, "UserId", "Name", task.UserId);
+            return View(task);
         }
 
         // GET: Tasks/Delete/5
@@ -100,12 +102,12 @@ namespace Todo.Webapp.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Tasks tasks = db.Tasks.Find(id);
-            if (tasks == null)
+            Task task = db.tasks.Find(id);
+            if (task == null)
             {
                 return HttpNotFound();
             }
-            return View(tasks);
+            return View(task);
         }
 
         // POST: Tasks/Delete/5
@@ -113,8 +115,8 @@ namespace Todo.Webapp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            Tasks tasks = db.Tasks.Find(id);
-            db.Tasks.Remove(tasks);
+            Task task = db.tasks.Find(id);
+            db.tasks.Remove(task);
             db.SaveChanges();
             return RedirectToAction("Index");
         }
