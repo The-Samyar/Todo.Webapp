@@ -1,0 +1,32 @@
+﻿@model IEnumerable<DataLayer.Models.Task>
+    
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Task</th>
+            <th scope="col">Completed</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{ 
+            var i = 1;
+        }
+        @foreach(var task in Model)
+        {
+        <tr>
+            <th scope="row">i</th>
+            <td>@task.Title</td>
+            <td>@task.Complete</td>
+        </tr>
+            i++;
+        }
+    </tbody>
+</table>

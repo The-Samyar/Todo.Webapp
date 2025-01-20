@@ -19,7 +19,7 @@ namespace Todo.Webapp.Controllers
         public ActionResult Index()
         {
             var tasks = db.tasks.Include(t => t.User).ToList();
-            return View();
+            return View(tasks);
         }
 
         // GET: Tasks/Details/5
